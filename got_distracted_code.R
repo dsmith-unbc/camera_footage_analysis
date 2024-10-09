@@ -1,7 +1,7 @@
 
 
 analyze_cam_dat <- function(video_folder = NULL, threshold_value = 1000, cores = 6,
-                            crop_height = 100,
+                            crop_height = 100, sensitivity = 10,
                             pattern = "DSCF",
                             move_files = FALSE){
 
@@ -15,6 +15,8 @@ invisible(lapply(packages,require,character.only = TRUE))
 rm(packages)
 
 cores <- cores
+
+sensitivity = sensitivity
 
 threshold_value <- threshold_value
 
@@ -33,7 +35,8 @@ plan(multisession,workers = cores)
 found_movement <- foreach(v = videos,.combine = rbind, 
                           .options.future = list(globals = structure(TRUE, 
                                   add = c("threshold_value", 
-                                          "crop_height")))) %dofuture% {
+                                          "crop_height",
+                                          "sensitivity")))) %dofuture% {
 
   found_movement <- data.frame(video_name = character(), movement = logical(), stringsAsFactors = FALSE)
   
@@ -85,7 +88,7 @@ movement_detection <- function(img1, img2) {
 differences <- lapply(1:(length(images)-1), function(i) {
   image_name <- frames[[i]]
   
-  diff <- image_compare(images[[i+1]], images[[i]], metric = "AE", fuzz = 10)
+  diff <- image_compare(images[[i+1]], images[[i]], metric = "AE", fuzz = sensitivity)
   value <- attributes(diff)$distortion
   # Return a data frame row with image name and value
   data.frame(video_name = video_name, image_name = image_name, value = value)
